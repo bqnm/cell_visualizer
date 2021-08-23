@@ -4,11 +4,45 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 import matplotlib.pyplot as plt
 import scanpy as sc
+import sys
+from pathlib2 import Path
 
+if len(sys.argv) > 1:
+    path = Path(sys.argv[1])
 
+else:
+    path = Path('./data')
+
+def pick_data_file(container, data_path):
+    afiles = list(data_path.glob("**/*.h5ad"))
+    num_files = len(afiles)
+    options = list(range(len(afiles) + 1))
+
+    def format_path(idx):
+        if idx == 0:
+            if num_files > 0:
+                return "Choose a file..."
+            else:
+                return f'No files found in "{data_path}"'
+        else:
+            p = afiles[idx - 1]
+            name = p.name
+            parent = p.parent.relative_to(data_path).name
+            if parent:
+                item_str = f"{name} (from {parent})"
+            else:
+                item_str = name
+            return item_str
+
+    item = container.selectbox("File", options, format_func=format_path)
+
+    if item > 0:
+        return sc.read_h5ad(afiles[item - 1])
+    else:
+        return None
 
 st.set_page_config(layout="wide")               
-col1, col2, col3 = st.columns((0.75,2,1))
+col1, col2 = st.columns((0.75,2))
 
 
 class DataSelection:
@@ -73,8 +107,8 @@ class DataSelection:
                     value=(min_v, max_v),
                     key=f'{key_prefix} Slider {filter_count}'
                 )
+
             filter_series = (gene_vals > filter_range[0]) & (gene_vals < filter_range[1])
-            
             return filter_series
 
     def add_color_filter(self, st_column, key_prefix):
@@ -87,21 +121,21 @@ class DataSelection:
         return column_selectbox
 
     def create_filters(self):
-        col3.title(f'Data Selection {str(self.selection_number)}')
+        col1.title(f'Data Selection {str(self.selection_number)}')
 
         filter_adata = self.adata
         
-        filter_count = col3.selectbox('Filter count', range(10), key=f'filter_count_box_{str(self.selection_number)}')
+        filter_count = col1.number_input('Filter count', min_value=0, key=f'filter_count_box_{str(self.selection_number)}')
         st.session_state.filter_count[self.session_state_index] = filter_count
 
         for i in range(st.session_state.filter_count[self.session_state_index]):
-            filter_series = self.add_filter(i+1, col3, str(self.selection_number), filter_adata, 'selection')
+            filter_series = self.add_filter(i+1, col1, str(self.selection_number), filter_adata, 'selection')
             filter_adata = filter_adata[filter_series]
         
-        color_checkbox = col3.checkbox('Color map', key=f'color_checkbox_{str(self.selection_number)}')
+        color_checkbox = col1.checkbox('Color map', key=f'color_checkbox_{str(self.selection_number)}')
 
         if color_checkbox:
-            color_filter = self.add_color_filter(col3, str(self.selection_number))
+            color_filter = self.add_color_filter(col1, str(self.selection_number))
             fig = sc.pl.umap(filter_adata, show=False, return_fig=True, color=[color_filter])
         
         else:
@@ -123,15 +157,14 @@ adata_selected = False
 col1.title('Cell Visualizer')
 
 
-uploaded_file = col1.file_uploader(label='Upload .h5ad File')
+adata = pick_data_file(col1, path)
 
 
-if uploaded_file != None:
-    adata = sc.read_h5ad(uploaded_file)
+if adata:
     adata_selected = True
     
 if adata_selected:
-    data_selection_count = col1.selectbox('Number of data selections', range(10))
+    data_selection_count = col1.number_input('Number of data selections', min_value=0)
     create_data_selections()
     
 
