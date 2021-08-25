@@ -155,10 +155,10 @@ def create_data_selections():
 
 col1.title('Cell Visualizer')
 
-default_dataset = col1.checkbox('Use pbmc68k_reduced')
+default_dataset = col1.checkbox('Use pbmc3k_processed')
 
 if default_dataset:
-    adata = sc.datasets.pbmc68k_reduced()
+    adata = sc.datasets.pbmc3k_processed()
 else:  
     adata = pick_data_file(col1, path)
     
