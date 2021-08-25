@@ -9,7 +9,7 @@ To use the visualizer locally, while in the cell_visualizer directory run:
 'streamlit run cellvisualizer.py --server.maxUploadSize=(MAX UPLOAD SIZE REQUIRED HERE)' 
 
 
-Unless you provide a different folder path as a command line argument this will automatically search for a folder called 'data'. This is where you should put your .h5ead files.
+Unless you provide a different folder path as a command line argument this will automatically search for a folder called 'data'. This is where you should put your .h5ad files.
 
 https://user-images.githubusercontent.com/365396/130834912-077ab0c1-7cca-460a-9476-cc9a85436da2.mp4
 
