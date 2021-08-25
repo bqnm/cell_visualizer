@@ -72,8 +72,9 @@ class DataSelection:
             key=f'{key_prefix} Column {filter_count}'
             )
         if column_selectbox not in adata.var_names:
-            column_series = self.replace_nan(adata.obs[column_selectbox])
+            column_series = adata.obs[column_selectbox]
             if not is_numeric_dtype(column_series):
+                column_series = self.replace_nan(adata.obs[column_selectbox])
                 column_values = set(column_series.to_list())
                 filter_selectbox = st_column.selectbox(
                     'Filter',
@@ -128,7 +129,7 @@ class DataSelection:
         filter_count = col1.number_input('Filter count', min_value=0, key=f'filter_count_box_{str(self.selection_number)}')
         st.session_state.filter_count[self.session_state_index] = filter_count
 
-        for i in range(st.session_state.filter_count[self.session_state_index]):
+        for i in range(int(st.session_state.filter_count[self.session_state_index])):
             filter_series = self.add_filter(i+1, col1, str(self.selection_number), filter_adata, 'selection')
             filter_adata = filter_adata[filter_series]
         
@@ -149,21 +150,19 @@ def create_data_selections():
     for i in range(data_selection_count):
         data_selection_dict[f'DataSelection_{i+1}'] = DataSelection(i+1, adata)
         data_selection_dict[f'DataSelection_{i+1}'].create_filters()
-    
 
-adata_selected = False
 
 
 col1.title('Cell Visualizer')
 
+default_dataset = col1.checkbox('Use pbmc68k_reduced')
 
-adata = pick_data_file(col1, path)
-
-
-if adata:
-    adata_selected = True
+if default_dataset:
+    adata = sc.datasets.pbmc68k_reduced()
+else:  
+    adata = pick_data_file(col1, path)
     
-if adata_selected:
+if adata:
     data_selection_count = col1.number_input('Number of data selections', min_value=0)
     create_data_selections()
     
